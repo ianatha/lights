@@ -7,6 +7,7 @@ import (
 	"github.com/keep94/gohue"
 	"github.com/keep94/maybe"
 	"os"
+	"os/user"
 )
 
 type Config struct {
@@ -18,13 +19,20 @@ type Config struct {
 	}
 }
 
-func main() {
-	var cfg Config
-	err := gcfg.ReadFileInto(&cfg, ".lights.ini")
+func handle_err(err error) {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func main() {
+	usr, err := user.Current()
+	handle_err(err)
+
+	var cfg Config
+	err = gcfg.ReadFileInto(&cfg, usr.HomeDir+"/.lights.ini")
+	handle_err(err)
 
 	app := cli.NewApp()
 	app.Name = "lights"
