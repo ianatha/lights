@@ -8,6 +8,9 @@ import (
 	"github.com/keep94/maybe"
 	"os"
 	"os/user"
+	"strconv"
+	"math/rand"
+	"time"
 )
 
 type Config struct {
@@ -27,6 +30,8 @@ func handle_err(err error) {
 }
 
 func main() {
+	rand.Seed(time.Now().UTC().UnixNano()) 
+
 	usr, err := user.Current()
 	handle_err(err)
 
@@ -66,6 +71,20 @@ func main() {
 		},
 	}
 
+	var random = cli.Command{
+		Name:      "random",
+		ShortName: "rnd",
+		Usage:     "random color",
+		Action: func(c *cli.Context) {
+			for i := 1; i <= lights_count; i++ {
+				x := rand.Float64()
+				y := rand.Float64()
+				props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.NewColor(x, y))}
+				bridge.Set(i, &props)
+			}
+		},
+	}
+
 	var command_on = cli.Command{
 		Name:      "off",
 		ShortName: "0",
@@ -90,11 +109,26 @@ func main() {
 		},
 	}
 
+	var command_brightness = cli.Command{
+		Name:      "brightness",
+		ShortName: "bri",
+		Usage:     "turn on all lights",
+		Action: func(c *cli.Context) {
+			bright, _ := strconv.ParseUint(c.Args().First(), 10, 8)
+			props := gohue.LightProperties{Bri: maybe.NewUint8(uint8(bright))}
+			for i := 1; i <= lights_count; i++ {
+				bridge.Set(i, &props)
+			}
+		},
+	}
+
 	app.Commands = []cli.Command{
 		command_on,
 		command_off,
+		command_brightness,
 		red,
 		white,
+		random,
 	}
 
 	app.Run(os.Args)
