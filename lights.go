@@ -82,12 +82,9 @@ func main() {
 		ShortName: "rnd",
 		Usage:     "random color",
 		Action: func(c *cli.Context) {
-			for i := 1; i <= lights_count; i++ {
-				x := rand.Float64()
-				y := rand.Float64()
-				props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.NewColor(x, y)), TransitionTime: maybe.NewUint16(0)}
-				bridge.Set(i, &props)
-			}
+			x := rand.Float64()
+			y := rand.Float64()
+			set_color_func(gohue.NewColor(x, y), lights_count, bridge)(c)
 		},
 	}
 
