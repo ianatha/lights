@@ -97,6 +97,20 @@ func main() {
 		},
 	}
 
+	var popo = cli.Command{
+		Name:      "police",
+		ShortName: "popo",
+		Usage:     "popo scheme",
+		Action: func(c *cli.Context) {
+			for {
+				red.Action(c)
+				time.Sleep(250 * time.Millisecond)
+				blue.Action(c)
+				time.Sleep(250 * time.Millisecond)
+			}
+		},
+	}
+
 	var command_on = cli.Command{
 		Name:      "off",
 		ShortName: "0",
@@ -142,6 +156,7 @@ func main() {
 		white,
 		blue,
 		random,
+		popo,
 	}
 
 	app.Run(os.Args)
