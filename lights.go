@@ -52,7 +52,7 @@ func main() {
 		ShortName: "r",
 		Usage:     "set all lights to red",
 		Action: func(c *cli.Context) {
-			props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.Red)}
+			props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.Red), TransitionTime: maybe.NewUint16(0)}
 			for i := 1; i <= lights_count; i++ {
 				bridge.Set(i, &props)
 			}
@@ -76,7 +76,7 @@ func main() {
 		ShortName: "w",
 		Usage:     "set all lights to white",
 		Action: func(c *cli.Context) {
-			props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.White)}
+			props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.White), TransitionTime: maybe.NewUint16(0)}
 			for i := 1; i <= lights_count; i++ {
 				bridge.Set(i, &props)
 			}
@@ -91,7 +91,7 @@ func main() {
 			for i := 1; i <= lights_count; i++ {
 				x := rand.Float64()
 				y := rand.Float64()
-				props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.NewColor(x, y))}
+				props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.NewColor(x, y)), TransitionTime: maybe.NewUint16(0)}
 				bridge.Set(i, &props)
 			}
 		},
@@ -102,7 +102,7 @@ func main() {
 		ShortName: "0",
 		Usage:     "turn off all lights",
 		Action: func(c *cli.Context) {
-			props := gohue.LightProperties{On: maybe.NewBool(false)}
+			props := gohue.LightProperties{On: maybe.NewBool(false), TransitionTime: maybe.NewUint16(0)}
 			for i := 1; i <= lights_count; i++ {
 				bridge.Set(i, &props)
 			}
@@ -127,7 +127,7 @@ func main() {
 		Usage:     "turn on all lights",
 		Action: func(c *cli.Context) {
 			bright, _ := strconv.ParseUint(c.Args().First(), 10, 8)
-			props := gohue.LightProperties{Bri: maybe.NewUint8(uint8(bright))}
+			props := gohue.LightProperties{Bri: maybe.NewUint8(uint8(bright)), TransitionTime: maybe.NewUint16(0)}
 			for i := 1; i <= lights_count; i++ {
 				bridge.Set(i, &props)
 			}
