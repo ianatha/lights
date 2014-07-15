@@ -59,6 +59,18 @@ func main() {
 		},
 	}
 
+	var blue = cli.Command{
+		Name:      "blue",
+		ShortName: "b",
+		Usage:     "set all lights to blue",
+		Action: func(c *cli.Context) {
+			props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.Blue), TransitionTime: maybe.NewUint16(0)}
+			for i := 1; i <= lights_count; i++ {
+				bridge.Set(i, &props)
+			}
+		},
+	}
+
 	var white = cli.Command{
 		Name:      "white",
 		ShortName: "w",
@@ -128,6 +140,7 @@ func main() {
 		command_brightness,
 		red,
 		white,
+		blue,
 		random,
 	}
 
