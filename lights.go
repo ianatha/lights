@@ -29,6 +29,15 @@ func handle_err(err error) {
 	}
 }
 
+func set_color_func(color gohue.Color, lights_count int, bridge *gohue.Context) func(*cli.Context) {
+	return func(c *cli.Context) {
+			props := gohue.LightProperties{C: gohue.NewMaybeColor(color), TransitionTime: maybe.NewUint16(0)}
+			for i := 1; i <= lights_count; i++ {
+				bridge.Set(i, &props)
+			}
+		}
+}
+
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano()) 
 
@@ -51,36 +60,21 @@ func main() {
 		Name:      "red",
 		ShortName: "r",
 		Usage:     "set all lights to red",
-		Action: func(c *cli.Context) {
-			props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.Red), TransitionTime: maybe.NewUint16(0)}
-			for i := 1; i <= lights_count; i++ {
-				bridge.Set(i, &props)
-			}
-		},
+		Action: set_color_func(gohue.Red, lights_count, bridge),
 	}
 
 	var blue = cli.Command{
 		Name:      "blue",
 		ShortName: "b",
 		Usage:     "set all lights to blue",
-		Action: func(c *cli.Context) {
-			props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.Blue), TransitionTime: maybe.NewUint16(0)}
-			for i := 1; i <= lights_count; i++ {
-				bridge.Set(i, &props)
-			}
-		},
+		Action: set_color_func(gohue.Blue, lights_count, bridge),
 	}
 
 	var white = cli.Command{
 		Name:      "white",
 		ShortName: "w",
 		Usage:     "set all lights to white",
-		Action: func(c *cli.Context) {
-			props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.White), TransitionTime: maybe.NewUint16(0)}
-			for i := 1; i <= lights_count; i++ {
-				bridge.Set(i, &props)
-			}
-		},
+		Action: set_color_func(gohue.White, lights_count, bridge),
 	}
 
 	var random = cli.Command{
