@@ -94,9 +94,9 @@ func main() {
 		Usage:     "popo scheme",
 		Action: func(c *cli.Context) {
 			for {
-				red.Action(c)
+				set_color_func(gohue.Red, lights_count, bridge)(c)
 				time.Sleep(250 * time.Millisecond)
-				blue.Action(c)
+				set_color_func(gohue.Blue, lights_count, bridge)(c)
 				time.Sleep(250 * time.Millisecond)
 			}
 		},
