@@ -24,6 +24,12 @@ type Config struct {
 	}
 }
 
+type Lights struct {
+	config Config
+	bridge *gohue.Context
+	count int
+}
+
 func handle_err(err error) {
 	if err != nil {
 		fmt.Println(err)
@@ -31,16 +37,16 @@ func handle_err(err error) {
 	}
 }
 
-func set_color_func(color gohue.Color, lights_count int, bridge *gohue.Context) func(*cli.Context) {
+func (this Lights) set_color_func(color gohue.Color) func(*cli.Context) {
 	return func(c *cli.Context) {
 		props := gohue.LightProperties{C: gohue.NewMaybeColor(color), TransitionTime: maybe.NewUint16(0)}
-		for i := 1; i <= lights_count; i++ {
-			bridge.Set(i, &props)
+		for i := 1; i <= this.count; i++ {
+			this.bridge.Set(i, &props)
 		}
 	}
 }
 
-func set_color_hex_func(lights_count int, bridge *gohue.Context) func(*cli.Context) {
+func (this Lights) set_color_hex_func() func(*cli.Context) {
 	return func(c *cli.Context) {
 		hexcolor := c.Args().Get(0)
 		colour, err := colorful.Hex(hexcolor)
@@ -50,13 +56,13 @@ func set_color_hex_func(lights_count int, bridge *gohue.Context) func(*cli.Conte
 		}
 		x, y, _ := colour.Xyy()
 		props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.NewColor(x, y)), TransitionTime: maybe.NewUint16(0)}
-		for i := 1; i <= lights_count; i++ {
-			bridge.Set(i, &props)
+		for i := 1; i <= this.count; i++ {
+			this.bridge.Set(i, &props)
 		}
 	}
 }
 
-func set_color_from_pointer(lights_count int, bridge *gohue.Context) func(*cli.Context) {
+func (this Lights) set_color_from_pointer() func(*cli.Context) {
 	return func(c *cli.Context) {
 		last_colour := ColorAtScreen()
 		for {
@@ -65,12 +71,20 @@ func set_color_from_pointer(lights_count int, bridge *gohue.Context) func(*cli.C
 				fmt.Printf("color: %#+v\n", colour)
 				x, y, Y := colour.Xyy()
 				props := gohue.LightProperties{Bri: maybe.NewUint8(uint8(255 * Y)), C: gohue.NewMaybeColor(gohue.NewColor(x, y)), TransitionTime: maybe.NewUint16(0)}
-				for i := 1; i <= lights_count; i++ {
-					bridge.Set(i, &props)
+				for i := 1; i <= this.count; i++ {
+					this.bridge.Set(i, &props)
 				}
 			}
 			last_colour = colour
 		}
+	}
+}
+
+func MakeLights(cfg Config) Lights {
+	return Lights{
+		config: cfg,
+		bridge: gohue.NewContext(cfg.MeetHue.IPAddress, cfg.MeetHue.Username),
+		count: cfg.MeetHue.LightsCount,
 	}
 }
 
@@ -84,13 +98,12 @@ func main() {
 	err = gcfg.ReadFileInto(&cfg, usr.HomeDir+"/.lights.ini")
 	handle_err(err)
 
+	lights := MakeLights(cfg)
+
 	app := cli.NewApp()
 	app.Name = "lights"
 	app.Usage = "make an explosive entrance"
 
-	bridge := gohue.NewContext(cfg.MeetHue.IPAddress, cfg.MeetHue.Username)
-
-	lights_count := cfg.MeetHue.LightsCount
 
 	var hex = cli.Command{
 		Name:      "hex",
@@ -99,28 +112,28 @@ func main() {
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "color"},
 		},
-		Action: set_color_hex_func(lights_count, bridge),
+		Action: lights.set_color_hex_func(),
 	}
 
 	var red = cli.Command{
 		Name:      "red",
 		ShortName: "r",
 		Usage:     "set all lights to red",
-		Action:    set_color_func(gohue.Red, lights_count, bridge),
+		Action:    lights.set_color_func(gohue.Red),
 	}
 
 	var blue = cli.Command{
 		Name:      "blue",
 		ShortName: "b",
 		Usage:     "set all lights to blue",
-		Action:    set_color_func(gohue.Blue, lights_count, bridge),
+		Action:    lights.set_color_func(gohue.Blue),
 	}
 
 	var white = cli.Command{
 		Name:      "white",
 		ShortName: "w",
 		Usage:     "set all lights to white",
-		Action:    set_color_func(gohue.White, lights_count, bridge),
+		Action:    lights.set_color_func(gohue.White),
 	}
 
 	var random = cli.Command{
@@ -130,7 +143,7 @@ func main() {
 		Action: func(c *cli.Context) {
 			x := rand.Float64()
 			y := rand.Float64()
-			set_color_func(gohue.NewColor(x, y), lights_count, bridge)(c)
+			lights.set_color_func(gohue.NewColor(x, y))(c)
 		},
 	}
 
@@ -140,9 +153,9 @@ func main() {
 		Usage:     "popo scheme",
 		Action: func(c *cli.Context) {
 			for {
-				set_color_func(gohue.Red, lights_count, bridge)(c)
+				lights.set_color_func(gohue.Red)(c)
 				time.Sleep(250 * time.Millisecond)
-				set_color_func(gohue.Blue, lights_count, bridge)(c)
+				lights.set_color_func(gohue.Blue)(c)
 				time.Sleep(250 * time.Millisecond)
 			}
 		},
@@ -154,8 +167,8 @@ func main() {
 		Usage:     "turn off all lights",
 		Action: func(c *cli.Context) {
 			props := gohue.LightProperties{On: maybe.NewBool(false), TransitionTime: maybe.NewUint16(0)}
-			for i := 1; i <= lights_count; i++ {
-				bridge.Set(i, &props)
+			for i := 1; i <= lights.count; i++ {
+				lights.bridge.Set(i, &props)
 			}
 		},
 	}
@@ -166,8 +179,8 @@ func main() {
 		Usage:     "turn on all lights",
 		Action: func(c *cli.Context) {
 			props := gohue.LightProperties{On: maybe.NewBool(true)}
-			for i := 1; i <= lights_count; i++ {
-				bridge.Set(i, &props)
+			for i := 1; i <= lights.count; i++ {
+				lights.bridge.Set(i, &props)
 			}
 		},
 	}
@@ -179,8 +192,8 @@ func main() {
 		Action: func(c *cli.Context) {
 			bright, _ := strconv.ParseUint(c.Args().First(), 10, 8)
 			props := gohue.LightProperties{Bri: maybe.NewUint8(uint8(bright)), TransitionTime: maybe.NewUint16(0)}
-			for i := 1; i <= lights_count; i++ {
-				bridge.Set(i, &props)
+			for i := 1; i <= lights.count; i++ {
+				lights.bridge.Set(i, &props)
 			}
 		},
 	}
@@ -189,7 +202,7 @@ func main() {
 		Name:      "mouse",
 		ShortName: "m",
 		Usage:     "set light color from pointer",
-		Action:    set_color_from_pointer(lights_count, bridge),
+		Action:    lights.set_color_from_pointer(),
 	}
 
 	app.Commands = []cli.Command{
