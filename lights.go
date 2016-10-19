@@ -1,11 +1,11 @@
 package main
 
 import (
-	"code.google.com/p/gcfg"
 	"fmt"
-	"github.com/codegangsta/cli"
 	"github.com/keep94/gohue"
 	"github.com/keep94/maybe"
+	"github.com/urfave/cli"
+	"gopkg.in/gcfg.v1"
 	"math/rand"
 	"os"
 	"os/user"
