@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/keep94/gohue"
 	"github.com/keep94/maybe"
+	"github.com/lucasb-eyer/go-colorful"
 	"github.com/urfave/cli"
 	"gopkg.in/gcfg.v1"
+	"log"
 	"math/rand"
 	"os"
 	"os/user"
@@ -38,6 +40,22 @@ func set_color_func(color gohue.Color, lights_count int, bridge *gohue.Context) 
 	}
 }
 
+func set_color_hex_func(lights_count int, bridge *gohue.Context) func(*cli.Context) {
+	return func(c *cli.Context) {
+		hexcolor := c.Args().Get(0)
+		colour, err := colorful.Hex(hexcolor)
+		if err != nil {
+			log.Println(hexcolor)
+			log.Fatal(err)
+		}
+		x, y, _ := colour.Xyy()
+		props := gohue.LightProperties{C: gohue.NewMaybeColor(gohue.NewColor(x, y)), TransitionTime: maybe.NewUint16(0)}
+		for i := 1; i <= lights_count; i++ {
+			bridge.Set(i, &props)
+		}
+	}
+}
+
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -55,6 +73,16 @@ func main() {
 	bridge := gohue.NewContext(cfg.MeetHue.IPAddress, cfg.MeetHue.Username)
 
 	lights_count := cfg.MeetHue.LightsCount
+
+	var hex = cli.Command{
+		Name:      "hex",
+		ShortName: "#",
+		Usage:     "set all lights to given hex",
+		Flags: []cli.Flag{
+			cli.StringFlag{Name: "color"},
+		},
+		Action: set_color_hex_func(lights_count, bridge),
+	}
 
 	var red = cli.Command{
 		Name:      "red",
@@ -140,6 +168,7 @@ func main() {
 	}
 
 	app.Commands = []cli.Command{
+		hex,
 		command_on,
 		command_off,
 		command_brightness,
