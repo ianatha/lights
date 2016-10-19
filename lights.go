@@ -56,6 +56,24 @@ func set_color_hex_func(lights_count int, bridge *gohue.Context) func(*cli.Conte
 	}
 }
 
+func set_color_from_pointer(lights_count int, bridge *gohue.Context) func(*cli.Context) {
+	return func(c *cli.Context) {
+		last_colour := ColorAtScreen()
+		for {
+			colour := ColorAtScreen()
+			if colour != last_colour {
+				fmt.Printf("color: %#+v\n", colour)
+				x, y, Y := colour.Xyy()
+				props := gohue.LightProperties{Bri: maybe.NewUint8(uint8(255 * Y)), C: gohue.NewMaybeColor(gohue.NewColor(x, y)), TransitionTime: maybe.NewUint16(0)}
+				for i := 1; i <= lights_count; i++ {
+					bridge.Set(i, &props)
+				}
+			}
+			last_colour = colour
+		}
+	}
+}
+
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -167,6 +185,13 @@ func main() {
 		},
 	}
 
+	var command_pointer = cli.Command{
+		Name:      "mouse",
+		ShortName: "m",
+		Usage:     "set light color from pointer",
+		Action:    set_color_from_pointer(lights_count, bridge),
+	}
+
 	app.Commands = []cli.Command{
 		hex,
 		command_on,
@@ -177,6 +202,7 @@ func main() {
 		blue,
 		random,
 		popo,
+		command_pointer,
 	}
 
 	app.Run(os.Args)
