@@ -6,10 +6,10 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/keep94/gohue"
 	"github.com/keep94/maybe"
+	"math/rand"
 	"os"
 	"os/user"
 	"strconv"
-	"math/rand"
 	"time"
 )
 
@@ -31,15 +31,15 @@ func handle_err(err error) {
 
 func set_color_func(color gohue.Color, lights_count int, bridge *gohue.Context) func(*cli.Context) {
 	return func(c *cli.Context) {
-			props := gohue.LightProperties{C: gohue.NewMaybeColor(color), TransitionTime: maybe.NewUint16(0)}
-			for i := 1; i <= lights_count; i++ {
-				bridge.Set(i, &props)
-			}
+		props := gohue.LightProperties{C: gohue.NewMaybeColor(color), TransitionTime: maybe.NewUint16(0)}
+		for i := 1; i <= lights_count; i++ {
+			bridge.Set(i, &props)
 		}
+	}
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano()) 
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	usr, err := user.Current()
 	handle_err(err)
@@ -60,21 +60,21 @@ func main() {
 		Name:      "red",
 		ShortName: "r",
 		Usage:     "set all lights to red",
-		Action: set_color_func(gohue.Red, lights_count, bridge),
+		Action:    set_color_func(gohue.Red, lights_count, bridge),
 	}
 
 	var blue = cli.Command{
 		Name:      "blue",
 		ShortName: "b",
 		Usage:     "set all lights to blue",
-		Action: set_color_func(gohue.Blue, lights_count, bridge),
+		Action:    set_color_func(gohue.Blue, lights_count, bridge),
 	}
 
 	var white = cli.Command{
 		Name:      "white",
 		ShortName: "w",
 		Usage:     "set all lights to white",
-		Action: set_color_func(gohue.White, lights_count, bridge),
+		Action:    set_color_func(gohue.White, lights_count, bridge),
 	}
 
 	var random = cli.Command{
